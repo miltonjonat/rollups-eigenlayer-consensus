@@ -1,2 +1,3 @@
-# rollups-eigenlayer-consensus
-Cartesi Rollups quorum consensus implementation using EigenLayer
+# Rollups EigenLayer Consensus
+
+Cartesi Rollups consensus implementation using EigenLayer
