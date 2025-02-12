@@ -12,7 +12,7 @@ contract EigenlayerConsensusScript is Script {
     function run() public {
         vm.startBroadcast();
 
-        consensus = new EigenlayerConsensus();
+        consensus = new EigenlayerConsensus(10);
 
         vm.stopBroadcast();
     }

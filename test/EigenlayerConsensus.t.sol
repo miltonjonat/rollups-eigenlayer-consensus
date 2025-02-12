@@ -8,7 +8,7 @@ contract EigenlayerConsensusTest is Test {
     EigenlayerConsensus public consensus;
 
     function setUp() public {
-        consensus = new EigenlayerConsensus();
+        consensus = new EigenlayerConsensus(10);
         consensus.setNumber(0);
     }
 
