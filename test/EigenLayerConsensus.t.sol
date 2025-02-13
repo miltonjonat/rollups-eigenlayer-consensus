@@ -2,13 +2,13 @@
 pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
-import {EigenlayerConsensus} from "../src/EigenlayerConsensus.sol";
+import {EigenLayerConsensus} from "../src/EigenLayerConsensus.sol";
 
-contract EigenlayerConsensusTest is Test {
-    EigenlayerConsensus public consensus;
+contract EigenLayerConsensusTest is Test {
+    EigenLayerConsensus public consensus;
 
     function setUp() public {
-        consensus = new EigenlayerConsensus(10, 10);
+        consensus = new EigenLayerConsensus(10, 10);
     }
 
     function testFuzz_NotInFavor(
