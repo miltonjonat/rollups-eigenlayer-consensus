@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
+import {IEigenLayerConsensusServiceManager} from "./IEigenLayerConsensusServiceManager.sol";
 import {AbstractClaimSubmitter} from "rollups-contracts/consensus/AbstractClaimSubmitter.sol";
 import {IClaimSubmitter} from "rollups-contracts/consensus/IClaimSubmitter.sol";
 
 contract EigenLayerConsensus is AbstractClaimSubmitter {
+    /// @notice EigenLayer AVS instance for Cartesi Rollup Consensus
+    IEigenLayerConsensusServiceManager private immutable _serviceManager;
     /// @notice The amount of stake needed to back a claim in order for it to be accepted
     uint256 private immutable _stakeThreshold;
 
@@ -21,11 +24,15 @@ contract EigenLayerConsensus is AbstractClaimSubmitter {
     /// @dev See the `numOfValidatorsInFavorOf` and `isValidatorInFavorOf` functions.
     mapping(address => mapping(uint256 => mapping(bytes32 => Votes))) private _votes;
 
+    /// @param serviceManager EigenLayer AVS instance for Cartesi Rollup Consensus
     /// @param stakeThreshold The amount of stake needed to back a claim in order for it to be accepted
     /// @param epochLength The epoch length
     /// @dev Reverts if the stake threshold or epoch length are zero.
-    constructor(uint256 stakeThreshold, uint256 epochLength) AbstractClaimSubmitter(epochLength) {
+    constructor(IEigenLayerConsensusServiceManager serviceManager, uint256 stakeThreshold, uint256 epochLength)
+        AbstractClaimSubmitter(epochLength)
+    {
         require(stakeThreshold > 0, "stakeThreshold must not be zero");
+        _serviceManager = serviceManager;
         _stakeThreshold = stakeThreshold;
     }
 
@@ -34,8 +41,8 @@ contract EigenLayerConsensus is AbstractClaimSubmitter {
         external
         override
     {
-        // check submitter's stake registed in the AVS (will revert if operator is not registered)
-        uint256 stake = _getStake(msg.sender);
+        // check submitter's stake registered in the AVS (will revert if operator is not registered)
+        uint256 stake = _getStake(msg.sender, lastProcessedBlockNumber);
 
         // emit ClaimSubmission event
         emit ClaimSubmission(msg.sender, appContract, lastProcessedBlockNumber, outputsMerkleRoot);
@@ -55,8 +62,8 @@ contract EigenLayerConsensus is AbstractClaimSubmitter {
 
     /// @notice Returns the amount of stake in favor of a claim.
     /// @param appContract The application contract address
-    /// @param lastProcessedBlockNumber The number of the last processed block
-    /// @param outputsMerkleRoot The outputs Merkle root
+    /// @param lastProcessedBlockNumber The last processed block for the claim
+    /// @param outputsMerkleRoot The outputs Merkle root representing the claim
     /// @return The stake amount
     function stakeInFavorOf(address appContract, uint256 lastProcessedBlockNumber, bytes32 outputsMerkleRoot)
         external
@@ -68,8 +75,8 @@ contract EigenLayerConsensus is AbstractClaimSubmitter {
 
     /// @notice Returns whether a given validator is backing a claim.bytes
     /// @param appContract The application contract address
-    /// @param lastProcessedBlockNumber The number of the last processed block
-    /// @param outputsMerkleRoot The outputs Merkle root
+    /// @param lastProcessedBlockNumber The last processed block for the claim
+    /// @param outputsMerkleRoot The outputs Merkle root representing the claim
     /// @param validator The validator's account address
     /// @return True if the validator has voted in favor of the claim, false otherwise
     function isValidatorInFavorOf(
@@ -83,8 +90,8 @@ contract EigenLayerConsensus is AbstractClaimSubmitter {
 
     /// @notice Retrieves a `Votes` structure from storage for a given claim.
     /// @param appContract The application contract address
-    /// @param lastProcessedBlockNumber The number of the last processed block
-    /// @param outputsMerkleRoot The outputs Merkle root
+    /// @param lastProcessedBlockNumber The last processed block for the claim
+    /// @param outputsMerkleRoot The outputs Merkle root representing the claim
     /// @return The `Votes` structure related to a given claim
     function _getVotes(address appContract, uint256 lastProcessedBlockNumber, bytes32 outputsMerkleRoot)
         internal
@@ -94,12 +101,16 @@ contract EigenLayerConsensus is AbstractClaimSubmitter {
         return _votes[appContract][lastProcessedBlockNumber][outputsMerkleRoot];
     }
 
-    /// @notice Retrieves a validator's stake registered in the AVS.
+    /// @notice Retrieves a validator's stake registered in the AVS at a given block.
     /// @param validator The validator's account address
+    /// @param blockNumber Reference block for retrieving the stake
     /// @return The stake amount
     /// @dev Will revert if validator is not registered as an operator in the AVS
-    function _getStake(address validator) internal view returns (uint96) {
-        // TODO: check AVS ServiceManager
-        return 0;
+    function _getStake(address validator, uint256 blockNumber) internal view returns (uint96) {
+        require(
+            blockNumber <= type(uint32).max,
+            "EigenLayer does not support block numbers that exceed the limit for uint32"
+        );
+        return _serviceManager.getOperatorStake(validator, 0, uint32(blockNumber));
     }
 }
