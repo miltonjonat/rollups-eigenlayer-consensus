@@ -8,17 +8,19 @@ contract EigenlayerConsensusTest is Test {
     EigenlayerConsensus public consensus;
 
     function setUp() public {
-        consensus = new EigenlayerConsensus(10);
-        consensus.setNumber(0);
+        consensus = new EigenlayerConsensus(10, 10);
     }
 
-    function test_Increment() public {
-        consensus.increment();
-        assertEq(consensus.number(), 1);
+    function testFuzz_NotInFavor(
+        address app,
+        uint256 lastProcessedblockNumber,
+        bytes32 outputsMerkleRoot,
+        address validator
+    ) public view {
+        assertFalse(consensus.isValidatorInFavorOf(app, lastProcessedblockNumber, outputsMerkleRoot, validator));
     }
 
-    function testFuzz_SetNumber(uint256 x) public {
-        consensus.setNumber(x);
-        assertEq(consensus.number(), x);
+    function testFuzz_NoStake(address app, uint256 lastProcessedblockNumber, bytes32 outputsMerkleRoot) public view {
+        assertEq(0, consensus.stakeInFavorOf(app, lastProcessedblockNumber, outputsMerkleRoot));
     }
 }
