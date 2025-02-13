@@ -41,7 +41,7 @@ contract EigenLayerConsensus is AbstractClaimSubmitter {
         external
         override
     {
-        // check submitter's stake registered in the AVS (will revert if operator is not registered)
+        // check submitter's stake registered in the AVS (will revert if not registered as operator)
         uint256 stake = _getStake(msg.sender, lastProcessedBlockNumber);
 
         // emit ClaimSubmission event
@@ -50,11 +50,11 @@ contract EigenLayerConsensus is AbstractClaimSubmitter {
         // retrieve current votes for the claim
         Votes storage votes = _getVotes(appContract, lastProcessedBlockNumber, outputsMerkleRoot);
 
-        // accrue submitter's stake to the total amount backing the claim (unless he already voted)
+        // accrue submitter's stake to the total amount backing the claim (unless submitter already voted)
         if (!votes.inFavorByAddress[msg.sender]) {
             votes.inFavorByAddress[msg.sender] = true;
             votes.inFavorStake += stake;
-            if (stake > _stakeThreshold) {
+            if (votes.inFavorStake > _stakeThreshold) {
                 _acceptClaim(appContract, lastProcessedBlockNumber, outputsMerkleRoot);
             }
         }
