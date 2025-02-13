@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import {AbstractClaimSubmitter} from "rollups-contracts/consensus/AbstractClaimSubmitter.sol";
 import {IClaimSubmitter} from "rollups-contracts/consensus/IClaimSubmitter.sol";
 
-contract EigenlayerConsensus is AbstractClaimSubmitter {
+contract EigenLayerConsensus is AbstractClaimSubmitter {
     /// @notice The amount of stake needed to back a claim in order for it to be accepted
     uint256 private immutable _stakeThreshold;
 
