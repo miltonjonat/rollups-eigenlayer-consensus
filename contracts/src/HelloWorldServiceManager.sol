@@ -103,33 +103,17 @@ contract HelloWorldServiceManager is AbstractClaimSubmitter, ECDSAServiceManager
         uint32 referenceTaskIndex,
         bytes memory signature
     ) external {
-        // check that the task is valid, hasn't been responsed yet, and is being responded in time
-        require(
-            keccak256(abi.encode(task)) == allTaskHashes[referenceTaskIndex],
-            "supplied task does not match the one recorded in the contract"
-        );
-        require(
-            allTaskResponses[msg.sender][referenceTaskIndex].length == 0,
-            "Operator has already responded to the task"
-        );
-
-        // The message that was signed
-        bytes32 messageHash = keccak256(abi.encodePacked("Hello, ", task.name));
-        bytes32 ethSignedMessageHash = messageHash.toEthSignedMessageHash();
-        bytes4 magicValue = IERC1271Upgradeable.isValidSignature.selector;
-        if (!(magicValue == ECDSAStakeRegistry(stakeRegistry).isValidSignature(ethSignedMessageHash,signature))){
-            revert();
-        }
-
         // updating the storage with task responses
         allTaskResponses[msg.sender][referenceTaskIndex] = signature;
+
+        submitClaim(address(0), block.number - 1, "0xdeadbeef");
 
         // emitting event
         emit TaskResponded(referenceTaskIndex, task, msg.sender);
     }
-        /// @inheritdoc IClaimSubmitter
+    /// @inheritdoc IClaimSubmitter
     function submitClaim(address appContract, uint256 lastProcessedBlockNumber, bytes32 outputsMerkleRoot)
-        external
+        public
         override
     {
         // check submitter's stake registered in the AVS (will revert if not registered as operator)
@@ -137,7 +121,6 @@ contract HelloWorldServiceManager is AbstractClaimSubmitter, ECDSAServiceManager
 
         // emit ClaimSubmission event
         emit ClaimSubmission(msg.sender, appContract, lastProcessedBlockNumber, outputsMerkleRoot);
-
         // retrieve current votes for the claim
         Votes storage votes = _getVotes(appContract, lastProcessedBlockNumber, outputsMerkleRoot);
 

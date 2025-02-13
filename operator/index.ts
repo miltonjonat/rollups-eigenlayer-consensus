@@ -60,7 +60,11 @@ const signAndRespondToTask = async (taskIndex: number, taskCreatedBlock: number,
         taskIndex,
         signedTask
     );
-    await tx.wait();
+    const receipt = await tx.wait();
+    console.log("Transaction confirmed. Receipt:", receipt);
+    console.log("Event", receipt.event);
+    
+
     console.log(`Responded to task.`);
 };
 
